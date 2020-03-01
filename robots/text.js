@@ -1,11 +1,21 @@
 const algorithmia = require('algorithmia')
 const algorithmiaApiKey = require('../credentials/algorithmia.json').apiKey //pega a chave para se autenticar com o aughorithmia
 const sentenceBoundaryDetection = require('sbd') //pegando uma biblioteca do nod que quebra em sentencas de acordo com o ponto da frase
+
+const watsonApiKey = require ('../credentials/watson-nlu.json').apikey
+const NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-language-understanding/v1.js')
+const nlu = new NaturalLanguageUnderstandingV1({
+  iam_apikey: watsonApiKey,
+  version: '2018-04-05',
+  url: 'https://gateway.watsonplatform.net/natural-language-understanding/api/'
+})
 var robot = async function robot(content){
 	//baixando o conteudo do wipidea atraves do alghotirmea
 	await fetchContentFromWikipedia(content)
 	sanitizeContent(content)
 	breakContentIntoSentences(content)
+	limitMaximumSentences(content)
+	await fetchKeywordsOfAllSentences(content)
 	async function fetchContentFromWikipedia(content){   //funcao que pega dos dados da wikipedia
 const algorithmiaAuthenticated = algorithmia(algorithmiaApiKey)
 const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
@@ -52,5 +62,40 @@ content.sourceContentOriginal = wikipediaContent.content //pegando apenas o 'con
         images: []
       })
     })
-  }}
+  }
+  function limitMaximumSentences(content){       //diminuindo as sentencas
+  	content.sentences = content.sentences.slice(0,content.maximumSentences)	 //pega da posicao - ate o maximo sentences
+  }
+  async function fetchKeywordsOfAllSentences(content) {
+    for (const sentence of content.sentences) {
+      sentence.keywords = await fetchWatsonAndReturnKeywords(sentence.text)
+    }
+  }
+async function fetchWatsonAndReturnKeywords(sentence) {
+    return new Promise((resolve, reject) => {
+      nlu.analyze({
+        text: sentence,
+        features: {
+          keywords: {}
+        }
+      }, (error, response) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        const keywords = response.keywords.map((keyword) => {
+          return keyword.text
+        })
+
+        resolve(keywords)
+      })
+    })
+  }
+  }
+
+
+
+
+
 module.exports = robot

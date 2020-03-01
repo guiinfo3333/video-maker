@@ -3,7 +3,9 @@ const readline = require("readline-sync")
 	//inicializando o robo dentro do orquestrador :)
 
 async function start(){
-const content ={}
+const content ={
+maximumSentences: 7
+}
 content.searchTerm = askAndReturnSearchTerm()
 content.prefix = askAndReturnPrefix()
 await robots(content) 
@@ -20,7 +22,7 @@ const selectPrefixText = prefixes[selectedPrefixIndex]
 return selectPrefixText
 }
 
-console.log(content)
+console.log(JSON.stringify(content,null,4))
 }
 
 
