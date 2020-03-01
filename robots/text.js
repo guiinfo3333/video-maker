@@ -9,7 +9,11 @@ const nlu = new NaturalLanguageUnderstandingV1({
   version: '2018-04-05',
   url: 'https://gateway.watsonplatform.net/natural-language-understanding/api/'
 })
-var robot = async function robot(content){
+//inicializando robo de estado
+const state = require('./state.js')
+//fim do robo de estado
+var robot = async function robot(){
+	const content = state.load() //pegando o que tava salvo e colocando agora no content
 	//baixando o conteudo do wipidea atraves do alghotirmea
 	await fetchContentFromWikipedia(content)
 	sanitizeContent(content)
